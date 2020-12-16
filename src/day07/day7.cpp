@@ -121,6 +121,6 @@ int main()
         return mx;
     };
 
-    std::cout << "part2: " << find_max_amp(false) << std::endl;
-    std::cout << "part3: " << find_max_amp(true) << std::endl;
+    std::cout << "part1: " << find_max_amp(false) << std::endl;
+    std::cout << "part2: " << find_max_amp(true) << std::endl;
 }
