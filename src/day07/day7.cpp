@@ -24,14 +24,23 @@ std::vector<int> parse_input(const std::string& file){
     return input;
 }
 
+struct state_t{
+    int i;
+    int phase;
+    bool phase_set;
+    std::vector<int> prog;
+};
+
 int main()
 {
     const auto input = parse_input("../src/day07/day7_input.txt");
 
-    auto run = [&](int a,int b){
-        auto prog = input;
+    int result = 0;
+    bool finished = false;
 
-        int i = 0;
+    auto run = [&](state_t& state){
+        auto& prog = state.prog;
+        int& i = state.i;
         while (prog[i] != 99) {
             std::stringstream ss;
             ss << std::setfill('0') << std::setw(5) << prog[i];
@@ -51,12 +60,13 @@ int main()
                 write(param(1) * param(2));
                 i += 4;
             }else if (op_code == 3) {
-                prog[prog[i+1]] = a;
-                a = b;
+                prog[prog[i+1]] = state.phase_set ? result : state.phase;
+                state.phase_set = true;
                 i += 2;
             }else if (op_code == 4) {
-                return param(1);
+                result = param(1);
                 i += 2;
+                return;
             }else if (op_code == 5) {
                 if(param(1) != 0){
                     i = param(2);
@@ -77,28 +87,40 @@ int main()
                 i += 4;
             }else {
                 std::cout << "ErRoR! 0" << std::endl;
-                return -1;
+                return;
             }
         }
 
-        std::cout << "ErRoR! 1" << std::endl;
-        return -1;
+        finished = true;
+        return;
     };
 
-    auto batch_run = [&](const std::string& seq){
-        int result = 0;
-        for(int i=0; i<seq.size(); ++i){
-            result = run(seq[i]-'0', result);
+    auto amp_run = [&](const std::string& seq, bool feedback){
+        std::vector<state_t> states(5);
+        for(int i=0; i<5; ++i){
+            states[i] = { 0, seq[i]-'0', false, input }; 
         }
+        finished = false;
+        result = 0;
+        do{
+            for(int i=0; i<seq.size(); ++i){
+                run(states[i]);
+            }
+        }while(feedback && !finished);
         return result;
     };
 
-    std::string seq = "01234";
-    int mx = 0;
-    do {
-        mx = std::max(mx, batch_run(seq));
-    } 
-    while (std::next_permutation(seq.begin(),seq.end()));
+    auto find_max_amp = [&](bool feedback){
+        std::string seq = feedback ? "56789" : "01234";
+        int mx = 0;
+        do {
+            mx = std::max(mx, amp_run(seq,feedback));
+        } 
+        while (std::next_permutation(seq.begin(),seq.end()));
 
-    std::cout << mx << std::endl;
+        return mx;
+    };
+
+    std::cout << "part2: " << find_max_amp(false) << std::endl;
+    std::cout << "part3: " << find_max_amp(true) << std::endl;
 }
