@@ -13,6 +13,6 @@ add_executable(day06 src/day06/day6.cpp)
 add_executable(day07 src/day07/day7.cpp)
 add_executable(day08 src/day08/day8.cpp)
 add_executable(day09 src/day09/day9.cpp)
+add_executable(day10 src/day10/day10.cpp)
 
-target_link_options(day09 PUBLIC /DEBUG)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi " )
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi " )
