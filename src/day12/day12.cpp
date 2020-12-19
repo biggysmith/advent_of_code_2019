@@ -28,6 +28,7 @@ struct vec_t{
         struct{ int x,y,z,w; };
         __m128i data;
     };
+    vec_t(const __m128i& v) : data(v){}
 };
 
 struct moon_t{
@@ -36,31 +37,27 @@ struct moon_t{
 };
 
 vec_t& operator+=(vec_t& a,const vec_t& b) { 
-    a.data = _mm_add_epi32(a.data,b.data);
-    return a; 
+    return (a = _mm_add_epi32(a.data,b.data)); 
 }
 
 vec_t& operator-=(vec_t& a,const vec_t& b) { 
-    a.data = _mm_sub_epi32(a.data,b.data);
-    return a; 
+    return (a = _mm_sub_epi32(a.data,b.data));
 }
 
 vec_t operator-(const vec_t& a,const vec_t& b) { 
-    vec_t ret;
-    ret.data = _mm_sub_epi32(a.data,b.data);
-    return ret; 
+    return _mm_sub_epi32(a.data,b.data);
+}
+
+vec_t operator+(const vec_t& a,const vec_t& b) { 
+    return _mm_add_epi32(a.data,b.data);
 }
 
 vec_t operator<(const vec_t& a,const vec_t& b) { 
-    vec_t ret;
-    ret.data = _mm_cmplt_epi32(a.data,b.data);
-    return ret; 
+    return _mm_cmplt_epi32(a.data,b.data);
 }
 
 vec_t operator>(const vec_t& a,const vec_t& b) { 
-    vec_t ret;
-    ret.data = _mm_cmpgt_epi32(a.data,b.data);
-    return ret; 
+    return _mm_cmpgt_epi32(a.data,b.data);
 }
 
 bool operator==(const vec_t& a,const vec_t& b) { 
@@ -73,21 +70,15 @@ bool operator==(const moon_t& a,const moon_t& b) {
 }
 
 vec_t xxxx(const vec_t& a) { 
-    vec_t ret;
-    ret.data = _mm_shuffle_epi32(a.data,0x00);
-    return ret; 
+    return _mm_shuffle_epi32(a.data,0x00);
 }
 
 vec_t yyyy(const vec_t& a) { 
-    vec_t ret;
-    ret.data = _mm_shuffle_epi32(a.data,0x55);
-    return ret; 
+    return _mm_shuffle_epi32(a.data,0x55);
 }
 
 vec_t zzzz(const vec_t& a) { 
-    vec_t ret;
-    ret.data = _mm_shuffle_epi32(a.data,0xAA);
-    return ret; 
+    return _mm_shuffle_epi32(a.data,0xAA);
 }
 
 void print_moons(const std::vector<moon_t>& moons){
@@ -107,13 +98,13 @@ std::vector<moon_t> parse_input(const std::string& file){
         std::string x = line.substr(line.find("x=")+2);
         std::string y = line.substr(line.find("y=")+2);
         std::string z = line.substr(line.find("z=")+2);
-        vec_t pos {
+        vec_t pos = _mm_setr_epi32(
             std::stoi(x.substr(0,x.find(","))),
             std::stoi(y.substr(0,y.find(","))),
             std::stoi(z.substr(0,z.find(">"))),
             0
-        };
-        vec_t vel { 0,0,0,0 };
+        );
+        vec_t vel = _mm_setzero_si128();
         input.push_back({ pos, vel });
     }
 
@@ -128,23 +119,25 @@ void main()
     auto apply_gravity = [&]{
         moons2 = moons;
 
-        moons2[0].vel -= (moons[0].pos < moons[1].pos) - (moons[0].pos > moons[1].pos);
-        moons2[1].vel += (moons[0].pos < moons[1].pos) - (moons[0].pos > moons[1].pos);
+        auto m0 = (moons[0].pos < moons[1].pos) - (moons[0].pos > moons[1].pos);
+        auto m1 = (moons[0].pos < moons[2].pos) - (moons[0].pos > moons[2].pos);
+        auto m2 = (moons[0].pos < moons[3].pos) - (moons[0].pos > moons[3].pos);
+        auto m3 = (moons[1].pos < moons[2].pos) - (moons[1].pos > moons[2].pos);
+        auto m4 = (moons[1].pos < moons[3].pos) - (moons[1].pos > moons[3].pos);
+        auto m5 = (moons[2].pos < moons[3].pos) - (moons[2].pos > moons[3].pos);
 
-        moons2[0].vel -= (moons[0].pos < moons[2].pos) - (moons[0].pos > moons[2].pos);
-        moons2[2].vel += (moons[0].pos < moons[2].pos) - (moons[0].pos > moons[2].pos);
-
-        moons2[0].vel -= (moons[0].pos < moons[3].pos) - (moons[0].pos > moons[3].pos);
-        moons2[3].vel += (moons[0].pos < moons[3].pos) - (moons[0].pos > moons[3].pos);
-
-        moons2[1].vel -= (moons[1].pos < moons[2].pos) - (moons[1].pos > moons[2].pos);
-        moons2[2].vel += (moons[1].pos < moons[2].pos) - (moons[1].pos > moons[2].pos);
-
-        moons2[1].vel -= (moons[1].pos < moons[3].pos) - (moons[1].pos > moons[3].pos);
-        moons2[3].vel += (moons[1].pos < moons[3].pos) - (moons[1].pos > moons[3].pos);
-
-        moons2[2].vel -= (moons[2].pos < moons[3].pos) - (moons[2].pos > moons[3].pos);
-        moons2[3].vel += (moons[2].pos < moons[3].pos) - (moons[2].pos > moons[3].pos);
+        moons2[0].vel -= m0;
+        moons2[1].vel += m0;
+        moons2[0].vel -= m1;
+        moons2[2].vel += m1;
+        moons2[0].vel -= m2;
+        moons2[3].vel += m2;
+        moons2[1].vel -= m3;
+        moons2[2].vel += m3;
+        moons2[1].vel -= m4;
+        moons2[3].vel += m4;
+        moons2[2].vel -= m5;
+        moons2[3].vel += m5;
 
         std::swap(moons,moons2);
     };
@@ -229,7 +222,7 @@ void main()
                 steps[2] = total_steps;
             }
 
-        }while(!steps[0] || !steps[1] || !steps[2]);
+        }while(!(steps[0] && steps[1] && steps[2]));
 
         std::cout << "part2: " << std::lcm(std::lcm(steps[0],steps[1]),steps[2]) << std::endl;
     }
