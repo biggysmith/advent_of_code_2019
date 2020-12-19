@@ -6,9 +6,28 @@
 #include <sstream>
 #include <iomanip>
 #include <set>
+#include <emmintrin.h>
+#include <smmintrin.h>
+#include <chrono>
+
+struct timer{
+    using timer_t = std::chrono::steady_clock;
+
+    timer() 
+        : s_(timer_t::now()) {}
+
+    ~timer(){
+        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(timer_t::now() - s_).count() << "ms" << std::endl;
+    }
+
+    timer_t::time_point s_;
+};
 
 struct vec_t{
-    int x,y,z;
+    union{
+        struct{ int x,y,z,w; };
+        __m128i data;
+    };
 };
 
 struct moon_t{
@@ -17,10 +36,58 @@ struct moon_t{
 };
 
 vec_t& operator+=(vec_t& a,const vec_t& b) { 
-    a.x += b.x; 
-    a.y += b.y;  
-    a.z += b.z; 
+    a.data = _mm_add_epi32(a.data,b.data);
     return a; 
+}
+
+vec_t& operator-=(vec_t& a,const vec_t& b) { 
+    a.data = _mm_sub_epi32(a.data,b.data);
+    return a; 
+}
+
+vec_t operator-(const vec_t& a,const vec_t& b) { 
+    vec_t ret;
+    ret.data = _mm_sub_epi32(a.data,b.data);
+    return ret; 
+}
+
+vec_t operator<(const vec_t& a,const vec_t& b) { 
+    vec_t ret;
+    ret.data = _mm_cmplt_epi32(a.data,b.data);
+    return ret; 
+}
+
+vec_t operator>(const vec_t& a,const vec_t& b) { 
+    vec_t ret;
+    ret.data = _mm_cmpgt_epi32(a.data,b.data);
+    return ret; 
+}
+
+bool operator==(const vec_t& a,const vec_t& b) { 
+    __m128i x = _mm_xor_si128(a.data,b.data);
+    return _mm_test_all_zeros(x,x);
+}
+
+bool operator==(const moon_t& a,const moon_t& b) { 
+    return a.pos==b.pos && a.vel==b.vel;
+}
+
+vec_t xxxx(const vec_t& a) { 
+    vec_t ret;
+    ret.data = _mm_shuffle_epi32(a.data,0x00);
+    return ret; 
+}
+
+vec_t yyyy(const vec_t& a) { 
+    vec_t ret;
+    ret.data = _mm_shuffle_epi32(a.data,0x55);
+    return ret; 
+}
+
+vec_t zzzz(const vec_t& a) { 
+    vec_t ret;
+    ret.data = _mm_shuffle_epi32(a.data,0xAA);
+    return ret; 
 }
 
 void print_moons(const std::vector<moon_t>& moons){
@@ -43,15 +110,15 @@ std::vector<moon_t> parse_input(const std::string& file){
         vec_t pos {
             std::stoi(x.substr(0,x.find(","))),
             std::stoi(y.substr(0,y.find(","))),
-            std::stoi(z.substr(0,z.find(">")))
+            std::stoi(z.substr(0,z.find(">"))),
+            0
         };
-        vec_t vel { 0,0,0 };
+        vec_t vel { 0,0,0,0 };
         input.push_back({ pos, vel });
     }
 
     return input;
 }
-
 
 void main()
 {
@@ -61,62 +128,111 @@ void main()
     auto apply_gravity = [&]{
         moons2 = moons;
 
-        for(int y=0; y<moons.size(); ++y){
-            for(int x=y; x<moons.size(); ++x){
-                if(x != y){
-                    if(moons[x].pos.x < moons[y].pos.x){
-                        moons2[x].vel.x++;
-                        moons2[y].vel.x--;
-                    }
-                    else if(moons[x].pos.x > moons[y].pos.x){
-                        moons2[x].vel.x--;
-                        moons2[y].vel.x++;
-                    }
-                    if(moons[x].pos.y < moons[y].pos.y){
-                        moons2[x].vel.y++;
-                        moons2[y].vel.y--;
-                    }
-                    else if(moons[x].pos.y > moons[y].pos.y){
-                        moons2[x].vel.y--;
-                        moons2[y].vel.y++;
-                    }
-                    if(moons[x].pos.z < moons[y].pos.z){
-                        moons2[x].vel.z++;
-                        moons2[y].vel.z--;
-                    }
-                    else if(moons[x].pos.z > moons[y].pos.z){
-                        moons2[x].vel.z--;
-                        moons2[y].vel.z++;
-                    }
-                }
-            }
-        }
+        moons2[0].vel -= (moons[0].pos < moons[1].pos) - (moons[0].pos > moons[1].pos);
+        moons2[1].vel += (moons[0].pos < moons[1].pos) - (moons[0].pos > moons[1].pos);
+
+        moons2[0].vel -= (moons[0].pos < moons[2].pos) - (moons[0].pos > moons[2].pos);
+        moons2[2].vel += (moons[0].pos < moons[2].pos) - (moons[0].pos > moons[2].pos);
+
+        moons2[0].vel -= (moons[0].pos < moons[3].pos) - (moons[0].pos > moons[3].pos);
+        moons2[3].vel += (moons[0].pos < moons[3].pos) - (moons[0].pos > moons[3].pos);
+
+        moons2[1].vel -= (moons[1].pos < moons[2].pos) - (moons[1].pos > moons[2].pos);
+        moons2[2].vel += (moons[1].pos < moons[2].pos) - (moons[1].pos > moons[2].pos);
+
+        moons2[1].vel -= (moons[1].pos < moons[3].pos) - (moons[1].pos > moons[3].pos);
+        moons2[3].vel += (moons[1].pos < moons[3].pos) - (moons[1].pos > moons[3].pos);
+
+        moons2[2].vel -= (moons[2].pos < moons[3].pos) - (moons[2].pos > moons[3].pos);
+        moons2[3].vel += (moons[2].pos < moons[3].pos) - (moons[2].pos > moons[3].pos);
 
         std::swap(moons,moons2);
     };
 
     auto apply_velocity = [&]{
-        for(auto& moon : moons){
-            moon.pos += moon.vel;
-        }
+        moons[0].pos += moons[0].vel;
+        moons[1].pos += moons[1].vel;
+        moons[2].pos += moons[2].vel;
+        moons[3].pos += moons[3].vel;
     };
 
     auto energy = [](const vec_t& v){
         return std::abs(v.x) + std::abs(v.y) + std::abs(v.z);
     };
 
-    //print_moons(moons);
+    
+    {
+        for (int s = 0; s < 1000; ++s) {
+            apply_gravity();
+            apply_velocity();
+        }
 
-    for(int s=0; s<1000; ++s){
-        apply_gravity();
-        apply_velocity();
-        //print_moons(moons);
+        int total_energy = 0;
+        for (auto& moon : moons) {
+            total_energy += energy(moon.pos) * energy(moon.vel);
+        }
+        std::cout << "part1: " << total_energy << std::endl;
     }
 
-    int total_energy = 0;
-    for(auto& moon : moons){
-        total_energy += energy(moon.pos) * energy(moon.vel);
+
+    {
+        moons = parse_input("../src/day12/day12_input.txt");
+        moons2 = moons;
+        auto orig_moons = moons;
+
+        timer t;
+
+        unsigned long long total_steps = 0;
+        unsigned long long steps[3] = { 0,0,0 };
+
+        do{
+            apply_gravity();
+            apply_velocity();
+            total_steps++;
+
+            if(!steps[0] && 
+               xxxx(moons[0].pos) == xxxx(orig_moons[0].pos) && 
+               xxxx(moons[0].vel) == xxxx(orig_moons[0].vel) &&
+               xxxx(moons[1].pos) == xxxx(orig_moons[1].pos) && 
+               xxxx(moons[1].vel) == xxxx(orig_moons[1].vel) &&
+               xxxx(moons[2].pos) == xxxx(orig_moons[2].pos) && 
+               xxxx(moons[2].vel) == xxxx(orig_moons[2].vel) &&
+               xxxx(moons[3].pos) == xxxx(orig_moons[3].pos) && 
+               xxxx(moons[3].vel) == xxxx(orig_moons[3].vel)
+            ){
+                steps[0] = total_steps;
+            }
+
+            if(!steps[1] && 
+               yyyy(moons[0].pos) == yyyy(orig_moons[0].pos) && 
+               yyyy(moons[0].vel) == yyyy(orig_moons[0].vel) &&
+               yyyy(moons[1].pos) == yyyy(orig_moons[1].pos) && 
+               yyyy(moons[1].vel) == yyyy(orig_moons[1].vel) &&
+               yyyy(moons[2].pos) == yyyy(orig_moons[2].pos) && 
+               yyyy(moons[2].vel) == yyyy(orig_moons[2].vel) &&
+               yyyy(moons[3].pos) == yyyy(orig_moons[3].pos) && 
+               yyyy(moons[3].vel) == yyyy(orig_moons[3].vel)
+            ){
+                steps[1] = total_steps;
+            }
+
+            if(!steps[2] && 
+               zzzz(moons[0].pos) == zzzz(orig_moons[0].pos) && 
+               zzzz(moons[0].vel) == zzzz(orig_moons[0].vel) &&
+               zzzz(moons[1].pos) == zzzz(orig_moons[1].pos) && 
+               zzzz(moons[1].vel) == zzzz(orig_moons[1].vel) &&
+               zzzz(moons[2].pos) == zzzz(orig_moons[2].pos) && 
+               zzzz(moons[2].vel) == zzzz(orig_moons[2].vel) &&
+               zzzz(moons[3].pos) == zzzz(orig_moons[3].pos) && 
+               zzzz(moons[3].vel) == zzzz(orig_moons[3].vel)
+            ){
+                steps[2] = total_steps;
+            }
+
+        }while(!steps[0] || !steps[1] || !steps[2]);
+
+        std::cout << "part2: " << std::lcm(std::lcm(steps[0],steps[1]),steps[2]) << std::endl;
     }
-    std::cout << total_energy << std::endl;
+
 
 }
