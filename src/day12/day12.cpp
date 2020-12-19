@@ -29,6 +29,7 @@ struct vec_t{
         __m128i data;
     };
     vec_t(const __m128i& v) : data(v){}
+    operator __m128i() const{ return data; }
 };
 
 struct moon_t{
@@ -37,31 +38,31 @@ struct moon_t{
 };
 
 vec_t& operator+=(vec_t& a,const vec_t& b) { 
-    return (a = _mm_add_epi32(a.data,b.data)); 
+    return (a = _mm_add_epi32(a,b)); 
 }
 
 vec_t& operator-=(vec_t& a,const vec_t& b) { 
-    return (a = _mm_sub_epi32(a.data,b.data));
+    return (a = _mm_sub_epi32(a,b));
 }
 
 vec_t operator-(const vec_t& a,const vec_t& b) { 
-    return _mm_sub_epi32(a.data,b.data);
+    return _mm_sub_epi32(a,b);
 }
 
 vec_t operator+(const vec_t& a,const vec_t& b) { 
-    return _mm_add_epi32(a.data,b.data);
+    return _mm_add_epi32(a,b);
 }
 
 vec_t operator<(const vec_t& a,const vec_t& b) { 
-    return _mm_cmplt_epi32(a.data,b.data);
+    return _mm_cmplt_epi32(a,b);
 }
 
 vec_t operator>(const vec_t& a,const vec_t& b) { 
-    return _mm_cmpgt_epi32(a.data,b.data);
+    return _mm_cmpgt_epi32(a,b);
 }
 
 bool operator==(const vec_t& a,const vec_t& b) { 
-    __m128i x = _mm_xor_si128(a.data,b.data);
+    __m128i x = _mm_xor_si128(a,b);
     return _mm_test_all_zeros(x,x);
 }
 
@@ -70,15 +71,15 @@ bool operator==(const moon_t& a,const moon_t& b) {
 }
 
 vec_t xxxx(const vec_t& a) { 
-    return _mm_shuffle_epi32(a.data,0x00);
+    return _mm_shuffle_epi32(a,0x00);
 }
 
 vec_t yyyy(const vec_t& a) { 
-    return _mm_shuffle_epi32(a.data,0x55);
+    return _mm_shuffle_epi32(a,0x55);
 }
 
 vec_t zzzz(const vec_t& a) { 
-    return _mm_shuffle_epi32(a.data,0xAA);
+    return _mm_shuffle_epi32(a,0xAA);
 }
 
 void print_moons(const std::vector<moon_t>& moons){
