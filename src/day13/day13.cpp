@@ -179,6 +179,7 @@ void main()
         std::cout << "part1: " << std::count_if(screen.begin(), screen.end(), [](auto& tile) { return tile == 2; }) << std::endl;
     }
 
+    // part 2
     {
         run(false, true);
         std::cout << "part2: " << score << std::endl;
