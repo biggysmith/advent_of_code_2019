@@ -30,8 +30,6 @@ std::vector<long long> parse_input(const std::string& file){
         input.push_back(std::stoll(number_str));
     }
 
-    input.insert(input.end(),1<<16,0);
-
     return input;
 }
 
@@ -177,12 +175,12 @@ void main()
 
     // part 1
     {
-        run(false, 0);
+        run(false, false);
         std::cout << "part1: " << std::count_if(screen.begin(), screen.end(), [](auto& tile) { return tile == 2; }) << std::endl;
     }
 
     {
-        run(false, 2);
+        run(false, true);
         std::cout << "part2: " << score << std::endl;
     }
 }
