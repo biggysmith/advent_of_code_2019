@@ -181,10 +181,10 @@ void solve_maze(state_t& state,int x,int y,int dir)
         state.path_len = (int)std::count(state.screen.begin(), state.screen.end(), 3);
     } 
 
-    solve_maze(state, x, y,1);
-    solve_maze(state, x, y,2);
-    solve_maze(state, x, y,3);
-    solve_maze(state, x, y,4);
+    solve_maze(state, x, y, 1);
+    solve_maze(state, x, y, 2);
+    solve_maze(state, x, y, 3);
+    solve_maze(state, x, y, 4);
 
     // dir didnt work out, clear and reverse dir
     state.screen[y*state.width+x] = 0;
