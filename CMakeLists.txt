@@ -17,4 +17,10 @@ add_executable(day10 src/day10/day10.cpp)
 add_executable(day11 src/day11/day11.cpp)
 add_executable(day12 src/day12/day12.cpp)
 add_executable(day13 src/day13/day13.cpp)
+add_executable(day14 src/day14/day14.cpp)
+
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}") 
+endif()
 
