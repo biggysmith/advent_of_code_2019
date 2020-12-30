@@ -45,7 +45,6 @@ std::vector<reaction_t> parse_input(const std::string& file){
 
     while(std::getline(file_stream, line)){
 
-        std::regex re("[0-9]+|[A-Z]+|=>");
         std::sregex_token_iterator first{line.begin(), line.end(), re}, last;
         std::vector<std::string> tokens{first, last};
 
