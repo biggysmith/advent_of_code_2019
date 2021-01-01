@@ -129,23 +129,6 @@ int run(state_t& state,const std::string& input,int& n){
     return -1;
 };
 
-char to_char(char c){
-    return c;
-}
-
-char to_char(int c){
-    return '0'+c;
-}
-
-template<typename T,typename... U>
-std::vector<char> cmd(T t, U... u){
-    std::vector<char> ret; 
-    ret.push_back(t);
-    ((ret.push_back(','), ret.push_back(u)), ...);
-    return ret;
-}
-
-
 void main()
 {
     auto input = parse_input("../src/day17/day17_input.txt");
