@@ -151,7 +151,7 @@ void main()
         int val = query(x,y);
 
         auto test_block = [&](int tx,int ty){
-            return query(tx,ty) && query(tx+99,ty) && query(tx,ty-99) && query(tx+99,ty-99);
+            return query(tx,ty) /*&& query(tx+99,ty) && query(tx,ty-99)*/ && query(tx+99,ty-99);
         };
 
         bool found = false;
