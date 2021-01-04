@@ -133,7 +133,7 @@ int breadth_first_search(const vault_t& v, pos_t pos)
     while (!q.empty())
     {
         pos = q.front();
-		q.pop();
+        q.pop();
 
         if(count(pos.z) == goal){
             return pos.steps;
