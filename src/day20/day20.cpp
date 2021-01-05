@@ -237,7 +237,7 @@ void main()
     }
 
     {
-        std::vector<maze_t> maze_stack(30, maze_orig); // needed to crank up the stack size for this one...
+        std::vector<maze_t> maze_stack(27, maze_orig); // needed to crank up the stack size for this one...
         std::vector<int> step_record;
         solve2(maze_stack, pos_map, step_record, pos_map[end_pos], pos_map[begin_pos]);
 
